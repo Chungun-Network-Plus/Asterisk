@@ -51,26 +51,37 @@ const ip = (() => {
 const attrs = [{ name: 'commonName', value: ip }];
 const pems = selfsigned.generate(attrs, { days: 365 });
 
-// ── GitHub Pages에서 HTML 가져와서 res.send ──
+function formatDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // 0~11이므로 +1
+  const dd = String(date.getDate()).padStart(2, '0');
+
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+
+  return `${yyyy}.${mm}.${dd}. ${hh}:${min}:${ss}`;
+}
+
 function sendFromGitHub(url, res) {
   https
     .get(url, (response) => {
-      let data = '';
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-      response.on('end', () => {
-        res.send(data);
-      });
+      // Content-Type을 그대로 전달
+      res.setHeader(
+        'Content-Type',
+        response.headers['content-type'] || 'application/octet-stream'
+      );
+      response.pipe(res);
     })
     .on('error', (err) => {
-      res.status(500).send('Error fetching page');
+      res.status(500).send('Error fetching file');
     });
 }
 
 // Express 라우트
 app.use((req, res, next) => {
-  console.log(`A device connected '${req.url}'`);
+  if (req.url !== '/favicon.ico' && req.url !== '/Asterisk_Logo.png')
+    console.log(`[${formatDate(new Date())}] '${req.url}'`);
   next();
 });
 
