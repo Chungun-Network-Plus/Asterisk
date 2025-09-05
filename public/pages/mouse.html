@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Asterisk* | Mouse</title>
+    <style>
+      @font-face {
+        font-family: 'SokchoBadaDotum';
+        src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2')
+          format('woff2');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      html {
+        background-color: black;
+        user-select: none;
+        margin: 0;
+      }
+
+      body {
+        /* overscroll-behavior: none; */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 10px;
+        height: 100svh;
+      }
+
+      #logobox {
+        text-align: center;
+      }
+      #logo {
+        width: 250px;
+      }
+      #modename {
+        font-family: 'SokchoBadaDotum';
+        text-align: center;
+        color: white;
+      }
+      #okay {
+        background-color: white;
+        width: 200px;
+        height: 200px;
+        border-radius: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'SokchoBadaDotum';
+        font-size: 35px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      #buttons {
+        display: flex;
+        height: 200px;
+        width: 100%;
+        gap: 10px;
+      }
+
+      #buttons > div {
+        background-color: white;
+        border-radius: 20px;
+      }
+
+      #left {
+        flex: 4;
+      }
+      #middle {
+        flex: 1;
+      }
+      #right {
+        flex: 4;
+      }
+
+      #testing {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="whattobehided">
+      <div id="logobox">
+        <img src="images/Asterisk_Logo.png" alt="Asterisk* Logo" id="logo" />
+      </div>
+      <div id="modename">
+        [Mouse 모드] 스마트폰을 바닥에 '바로' 놓은 상태로 "확인"을 누른 후,
+        스마트폰을 움직여 마우스 포인터를 움직이고, 왼쪽으로 살짝 기울여
+        클릭하고, 많이 기울여 클릭 상태를 유지하세요.
+      </div>
+      <div id="okay">확인</div>
+    </div>
+    <div id="whattobeshown" style="display: none">
+      <div id="buttons">
+        <div id="left"></div>
+        <div id="middle"></div>
+        <div id="right"></div>
+      </div>
+    </div>
+    <div id="testing"></div>
+    <script>
+      const ws = new WebSocket(
+        'wss://' + window.location.href.replace('https://', '')
+      );
+
+      const whattobehided = document.querySelector('#whattobehided');
+      const whattobeshown = document.querySelector('#whattobeshown');
+      const okay = document.querySelector('#okay');
+
+      const left = document.querySelector('#left');
+      const middle = document.querySelector('#middle');
+      const right = document.querySelector('#right');
+
+      const testing = document.querySelector('#testing');
+
+      okay.addEventListener('click', () => {
+        whattobehided.style.display = 'none';
+        whattobeshown.style.display = 'block';
+        document.documentElement.requestFullscreen();
+      });
+
+      left.addEventListener('touchstart', () => {
+        ws.send('mouse/leftclickstart');
+      });
+
+      left.addEventListener('touchend', () => {
+        ws.send('mouse/leftclickend');
+      });
+
+      right.addEventListener('touchstart', () => {
+        ws.send('mouse/rightclickstart');
+      });
+
+      right.addEventListener('touchend', () => {
+        ws.send('mouse/rightclickend');
+      });
+
+      let now = new Date();
+      let vx = 0;
+      let vy = 0;
+      let sx = 0;
+      let sy = 0;
+
+      let prevaccx = 0;
+      let prevaccy = 0;
+      let prevvx = 0;
+      let prevvy = 0;
+
+      let xzeroing = 0;
+      let yzeroing = 0;
+
+      let loop = 0;
+      let axs = [];
+      let ays = [];
+
+      const sensor = new Accelerometer({ frequency: 60 });
+
+      sensor.addEventListener('reading', () => {
+        loop += 1;
+
+        axs.push(sensor.x);
+        ays.push(sensor.y);
+
+        if (loop === 10) {
+          loop = 0;
+          const dt = ((new Date() - now) / 1000) * 10; // ms -> s
+
+          vx = vx + (prevaccx + sensor.x) * 0.5 * dt; // v = v0 + at
+          vy = vy + (prevaccy + sensor.y) * 0.5 * dt;
+          sx = sx + (prevvx + vx) * 0.5 * dt; // s = s0 + vt
+          sy = sy + (prevvy + vy) * 0.5 * dt;
+
+          if (Math.abs(sensor.x) <= 0.02) {
+            xzeroing += 1;
+            if (xzeroing >= 10) {
+              xzeroing = 0;
+              vx = 0;
+            }
+          }
+          if (Math.abs(sensor.y) <= 0.02) {
+            yzeroing += 1;
+            if (yzeroing >= 10) {
+              yzering = 0;
+              vy = 0;
+            }
+          }
+          testing.textContent = `
+        x : ${sensor.x}
+        y : ${sensor.y}
+        `;
+        }
+        now = new Date();
+      });
+      sensor.start();
+    </script>
+  </body>
+</html>

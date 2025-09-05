@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Asterisk* | Trackpad</title>
+    <style>
+      @font-face {
+        font-family: 'SokchoBadaDotum';
+        src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2')
+          format('woff2');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      html {
+        background-color: black;
+        user-select: none;
+        margin: 0;
+      }
+
+      body {
+        overscroll-behavior: none;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 10px;
+        height: 100svh;
+      }
+
+      #logobox {
+        text-align: center;
+      }
+      #logo {
+        width: 250px;
+      }
+
+      #modename {
+        font-family: 'SokchoBadaDotum';
+        text-align: center;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="logobox">
+      <img src="images/Asterisk_Logo.png" alt="Asterisk* Logo" id="logo" />
+    </div>
+    <div id="modename">[Trackpad 모드] 드래그하고 클릭하세요.</div>
+
+    <script>
+      const body = document.querySelector('body');
+      const ws = new WebSocket(
+        'wss://' + window.location.href.replace('https://', '')
+      );
+      let [x, y] = [0, 0];
+      let [plusx, plusy] = [0, 0];
+      let [beforex, beforey] = [0, 0];
+      let state = 'none';
+      let clickmove = false;
+      let firsttouchmove = true;
+      let touchduration = 0;
+
+      body.addEventListener('touchstart', (e) => {
+        const { clientX, clientY } = e.touches[0];
+        x = clientX;
+        y = clientY;
+
+        if (e.touches.length === 2) {
+          const { clientX: plusclientX, clientY: plusclientY } = e.touches[1];
+          plusx = plusclientX;
+          plusy = plusclientY;
+          beforex = plusclientX;
+          beforey = plusclientY;
+        }
+        if (e.touches.length === 1) {
+          ws.send(`trackpad/move/0/0`);
+
+          beforex = 0;
+          beforey = 0;
+        }
+
+        state = 'none';
+      });
+
+      body.addEventListener(
+        'touchmove',
+        (e) => {
+          e.preventDefault();
+          touchduration += 1;
+
+          const { clientX, clientY } = e.touches[0];
+
+          if (e.touches.length === 1 && beforex === 0) {
+            if (clickmove === true) {
+              ws.send('trackpad/clickmovestart');
+              clickmove = false;
+            }
+            if (firsttouchmove === true) {
+              firsttouchmove = false;
+            } else {
+              ws.send(`trackpad/move/${clientX - x}/${clientY - y}`);
+            }
+          }
+          if (e.touches.length === 2) {
+            const { clientX: plusclientX, clientY: plusclientY } = e.touches[1];
+            if (state === 'none') {
+              // 벡터의 내적
+              if (
+                (clientX - x) * (plusclientX - plusx) +
+                  (clientY - y) * (plusclientY - plusy) >=
+                0
+              ) {
+                // 예각이면
+                if ((clientY - y) / (clientX - x) >= 1) {
+                  state = 'vertscroll'; // 세로스크롤
+                } else {
+                  // state = 'horiscroll'; // 가로스크롤
+                  state = 'vertscroll';
+                }
+              } else {
+                // 둔각이면
+                state = 'zoom';
+              }
+            }
+            ws.send(`trackpad/${state}/${clientX - x}/${clientY - y}`);
+            console.log(state);
+
+            plusx = plusclientX;
+            plusy = plusclientY;
+          }
+          x = clientX;
+          y = clientY;
+        },
+        { passive: false }
+      );
+
+      body.addEventListener('touchend', (e) => {
+        ws.send('trackpad/clickmoveend');
+        firsttouchmove = true;
+
+        if (e.touches.length + e.changedTouches.length === 2) {
+          if (Math.abs(x - beforex) < 5) {
+            ws.send('trackpad/rightclick');
+          }
+          x = beforex;
+          y = beforey;
+        } else {
+          if (touchduration <= 2) {
+          }
+        }
+        touchduration = 0;
+      });
+
+      body.addEventListener('click', () => {
+        ws.send('trackpad/leftclick');
+        // alert('wow');
+        clickmove = true;
+        setTimeout(() => {
+          clickmove = false;
+        }, 400);
+      });
+    </script>
+  </body>
+</html>

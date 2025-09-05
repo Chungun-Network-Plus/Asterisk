@@ -1,0 +1,23 @@
+{
+  "name": "asterisk",
+  "version": "1.0.0",
+  "private": true,
+  "bin": "server.js",
+  "scripts": {
+    "build:win": "pkg . --targets node18-win-x64 --output dist/asterisk.exe"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "express": "^5.1.0",
+    "selfsigned": "^2.4.1",
+    "ws": "^8.18.3"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ]
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
+}

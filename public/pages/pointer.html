@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Asterisk* | Pointer</title>
+
+    <style>
+      @font-face {
+        font-family: 'SokchoBadaDotum';
+        src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2')
+          format('woff2');
+        font-weight: normal;
+        font-style: normal;
+      }
+      html {
+        background-color: black;
+        user-select: none;
+        margin: 0;
+      }
+
+      body {
+        overscroll-behavior: none;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 10px;
+        height: 100svh;
+      }
+      #output {
+        font-size: 1.2em;
+        white-space: pre-line;
+      }
+
+      #okay {
+        background-color: white;
+        width: 200px;
+        height: 200px;
+        border-radius: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'SokchoBadaDotum';
+        font-size: 35px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      #logobox {
+        text-align: center;
+      }
+      #logo {
+        width: 250px;
+      }
+
+      #modename {
+        font-family: 'SokchoBadaDotum';
+        text-align: center;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="logobox">
+      <img src="images/Asterisk_Logo.png" alt="Asterisk* Logo" id="logo" />
+    </div>
+    <div id="modename">
+      [Pointer 모드] 시작 버튼을 누르고 장치를 회전시키세요.
+    </div>
+
+    <div id="okay">시작</div>
+
+    <script>
+      let y = 0;
+      let z = 0;
+      function degreesToRadians(d) {
+        return (d * Math.PI) / 180;
+      }
+
+      window.addEventListener('deviceorientation', (event) => {
+        const alpha = event.alpha || 0; // z축 회전 (방위각)
+        const beta = event.beta || 0; // x축 회전 (앞뒤)
+        const gamma = event.gamma || 0; // y축 회전 (좌우)
+
+        const a = degreesToRadians(alpha);
+        const b = degreesToRadians(beta);
+        const g = degreesToRadians(gamma);
+
+        const cA = Math.cos(a),
+          sA = Math.sin(a);
+        const cB = Math.cos(b),
+          sB = Math.sin(b);
+        const cG = Math.cos(g),
+          sG = Math.sin(g);
+
+        // 회전 행렬
+        const m11 = cA * cG - sA * sB * sG;
+        const m12 = -cB * sA;
+        const m13 = cA * sG + cG * sA * sB;
+
+        const m21 = cG * sA + cA * sB * sG;
+        const m22 = cA * cB;
+        const m23 = sA * sG - cA * cG * sB;
+
+        const m31 = -cB * sG;
+        const m32 = sB;
+        const m33 = cB * cG;
+
+        // "위쪽(y축)" 벡터
+        const upX = m12;
+        const upY = m22;
+        const upZ = m32;
+
+        // 정규화 (길이=1 보장)
+        const len = Math.sqrt(upX * upX + upY * upY + upZ * upZ);
+        const ux = upX / len;
+        const uy = upY / len;
+        const uz = upZ / len;
+
+        //   document.getElementById('output').textContent = `위쪽 방향 벡터:
+        // x: ${ux.toFixed(3)}
+        // y: ${uy.toFixed(3)}
+        // z: ${uz.toFixed(3)}`;
+        y = 30 - 30 * (uy / ux);
+        z = -(30 - 30 * (uz / ux));
+      });
+      const ws = new WebSocket(
+        'wss://' + window.location.href.replace('https://', '')
+      );
+      let touching = false;
+      const body = document.querySelector('body');
+
+      const okay = document.querySelector('#okay');
+      okay.addEventListener('click', () => {
+        if (okay.textContent === '시작') {
+          ws.send(`pointer/start/${y}/${z}`);
+          touching = true;
+          okay.textContent = '종료';
+        } else {
+          touching = false;
+          okay.textContent = '시작';
+        }
+      });
+      setInterval(() => {
+        if (touching) {
+          ws.send(`pointer/move/${y}/${z}`);
+        }
+      }, 50);
+    </script>
+  </body>
+</html>

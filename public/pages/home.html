@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Asterisk*</title>
+    <style>
+      @font-face {
+        font-family: 'SokchoBadaDotum';
+        src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2')
+          format('woff2');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      html {
+        background-color: black;
+        user-select: none;
+        margin: 0;
+      }
+
+      body {
+        /* overscroll-behavior: none; */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 10px;
+        height: 100svh;
+      }
+
+      #logobox {
+        text-align: center;
+      }
+      #logo {
+        width: 250px;
+      }
+
+      .modesbox {
+        font-family: 'SokchoBadaDotum';
+        background-color: white;
+        padding: 20px;
+        margin: 10px;
+        border-radius: 20px;
+        display: block;
+        text-decoration: none;
+        color: black;
+      }
+
+      .modesbox > div:nth-child(1) {
+        font-size: 30px;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="logobox">
+      <img src="images/Asterisk_Logo.png" alt="Asterisk* Logo" id="logo" />
+    </div>
+
+    <a class="modesbox" href="/presenter">
+      <div>Presenter 모드</div>
+      <div>페이지를 앞으로, 그리고 뒤로 넘기는 기능을 제공합니다.</div>
+    </a>
+
+    <a class="modesbox" href="/trackpad">
+      <div>Trackpad 모드</div>
+      <div>제스처를 제외한 노트북 트랙패드의 기능을 제공합니다.</div>
+    </a>
+
+    <!-- <a class="modesbox" href="/mouse">
+      <div>Mouse 모드</div>
+      <div>스마트폰을 마우스처럼 쓸 수 있는 기능을 제공합니다.</div>
+    </a> -->
+
+    <a class="modesbox" href="/stylus">
+      <div>Stylus 모드</div>
+      <div>
+        스타일러스 펜 마냥 필기나 드로잉을 할 수 있는 기능을 제공합니다.
+      </div>
+    </a>
+
+    <a class="modesbox" href="/pointer">
+      <div>Pointer 모드</div>
+      <div>
+        스마트폰이 가리키는 방향에 마우스 포인터가 위치하는 기능을 제공합니다.
+      </div>
+    </a>
+
+    <script></script>
+  </body>
+</html>
