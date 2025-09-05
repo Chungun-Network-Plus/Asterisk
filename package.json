@@ -4,7 +4,7 @@
   "private": true,
   "bin": "server.js",
   "scripts": {
-    "build:win": "pkg . --targets node18-win-x64 --output dist/asterisk.exe"
+    "build:win": "pkg . --targets node18-win-x64 --output dist/Asterisk.exe"
   },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
@@ -12,12 +12,13 @@
     "selfsigned": "^2.4.1",
     "ws": "^8.18.3"
   },
-  "pkg": {
-    "assets": [
-      "public/**/*"
-    ]
-  },
   "devDependencies": {
     "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "node_modules/**/*"
+    ]
   }
 }

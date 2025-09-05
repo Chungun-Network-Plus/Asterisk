@@ -69,7 +69,7 @@ const pems = selfsigned.generate(attrs, { days: 365 });
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.use((req, res, next) => {
-  if (req.url !== '/favicon.ico')
+  if (req.url !== '/favicon.ico' && req.url !== '/Asterisk_Logo.png')
     console.log(`[${formatDate(new Date())}] '${req.url}'`);
   next();
 });
@@ -98,6 +98,10 @@ app.get('/pointer', (req, res) => {
 
 app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public/images/favicon.ico'));
+});
+
+app.get('/Asterisk_Logo.png', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public/images/Asterisk_Logo.png'));
 });
 
 // HTTPS 서버
