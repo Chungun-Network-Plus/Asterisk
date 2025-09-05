@@ -2,7 +2,7 @@
   "name": "asterisk",
   "version": "1.0.0",
   "private": true,
-  "bin": "server.js",
+  "bin": "server2.js",
   "scripts": {
     "build:win": "pkg . --targets node18-win-x64 --output dist/Asterisk.exe"
   },
