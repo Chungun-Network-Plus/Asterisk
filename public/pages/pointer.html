@@ -125,7 +125,7 @@
         // y: ${uy.toFixed(3)}
         // z: ${uz.toFixed(3)}`;
         y = 30 - 30 * (uy / ux);
-        z = -(30 - 30 * (uz / ux));
+        z = 30 - 30 * (uz / ux);
       });
       const ws = new WebSocket(
         'wss://' + window.location.href.replace('https://', '')

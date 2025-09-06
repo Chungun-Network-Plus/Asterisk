@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pointer App</title>
+    <style>
+      @font-face {
+        font-family: 'SokchoBadaDotum';
+        src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/SokchoBadaDotum.woff2')
+          format('woff2');
+      }
+      body {
+        font-family: 'SokchoBadaDotum';
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      .box {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -45%);
+        width: 80vw;
+        height: 75vh;
+        background-color: white;
+        border-radius: 20px;
+        border: 3px solid #911551;
+        overflow: hidden;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        touch-action: none;
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        gap: 15px;
+      }
+      .text1 {
+        position: absolute;
+        top: 55px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        font-weight: bold;
+        color: #911551;
+      }
+      #clearBtn,
+      #pageBtn,
+      #page-number {
+        font-family: 'SokchoBadaDotum';
+        background-color: white;
+      }
+      #btnBefore,
+      #btnAfter {
+        width: 15px;
+        height: auto;
+        cursor: pointer;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="text1">Asterisk*</div>
+    <div class="box" id="box">
+      <canvas id="drawCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="controls">
+      <label
+        ><input type="radio" name="mode" value="dot" checked /> 포인터</label
+      >
+      <label><input type="radio" name="mode" value="line" /> 선</label>
+      <label><input type="radio" name="mode" value="eraser" /> 지우개</label>
+      <label><input type="radio" name="mode" value="gesture" /> 제스쳐</label>
+      <button id="clearBtn">전체 지우기</button>
+      <img
+        id="btnBefore"
+        style="margin-left: 30px; margin-top: 3px"
+        src="/right-arrow.png"
+        alt="Before"
+      />
+      <div style="margin-top: 6px">페이지 이동하기</div>
+      <img
+        id="btnAfter"
+        style="margin-top: 3px"
+        src="/left-arrow.png"
+        alt="After"
+      />
+    </div>
+
+    <script>
+      const socket = new WebSocket(
+        'wss://' + window.location.href.replace('https://', '')
+      );
+      const canvas = document.getElementById('drawCanvas');
+      const ctx = canvas.getContext('2d');
+      const box = document.getElementById('box');
+      let selectedMode = 'dot';
+
+      let lines = [];
+      let pointerDot = null;
+      let drawing = false;
+      let currentLine = null;
+      let gestureStart = null;
+
+      socket.addEventListener('open', () => {
+        //console.log("WebSocket 연결됨");
+      });
+
+      document.querySelectorAll('input[name="mode"]').forEach((radio) => {
+        radio.addEventListener('change', (e) => {
+          selectedMode = e.target.value;
+        });
+      });
+
+      function drawCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#911551';
+        ctx.lineWidth = 4;
+        lines.forEach((line) => {
+          ctx.beginPath();
+          ctx.moveTo(line.points[0].x, line.points[0].y);
+          for (let i = 1; i < line.points.length; i++) {
+            ctx.lineTo(line.points[i].x, line.points[i].y);
+          }
+          ctx.stroke();
+        });
+
+        if (pointerDot) {
+          ctx.fillStyle = '#911551';
+          ctx.beginPath();
+          ctx.arc(pointerDot.x, pointerDot.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawLoop() {
+        drawCanvas();
+        requestAnimationFrame(drawLoop);
+      }
+      requestAnimationFrame(drawLoop);
+
+      box.addEventListener(
+        'touchstart',
+        (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const rect = canvas.getBoundingClientRect();
+          const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+          const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+
+          drawing = true;
+
+          if (selectedMode === 'gesture') {
+            gestureStartx = x;
+            gestureStarty = y;
+          } else {
+            socket.send(`stylus/${selectedMode}Start/${x}/${y}`);
+            socket.send(`stylus/${selectedMode}/${x}/${y}`);
+
+            if (selectedMode === 'dot') {
+              pointerDot = { x, y };
+            } else if (selectedMode === 'line') {
+              currentLine = { points: [{ x, y }] };
+            } else if (selectedMode === 'eraser') {
+              eraseAt(x, y);
+            }
+          }
+        },
+        { passive: false }
+      );
+
+      box.addEventListener(
+        'touchmove',
+        (e) => {
+          if (!drawing) return;
+          e.preventDefault();
+          const touch = e.touches[0];
+          const rect = canvas.getBoundingClientRect();
+          const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+          const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+
+          if (selectedMode === 'dot' && pointerDot) {
+            pointerDot.x = x;
+            pointerDot.y = y;
+          } else if (selectedMode === 'line' && currentLine) {
+            currentLine.points.push({ x, y });
+          } else if (selectedMode === 'eraser') {
+            eraseAt(x, y);
+          }
+
+          if (selectedMode !== 'gesture') {
+            socket.send(`stylus/${selectedMode}/${x}/${y}`);
+          }
+        },
+        { passive: false }
+      );
+
+      box.addEventListener('touchend', (e) => {
+        if (!drawing) return;
+        drawing = false;
+
+        if (selectedMode === 'gesture' && gestureStartx && gestureStarty) {
+          const touch = e.changedTouches[0];
+          const rect = canvas.getBoundingClientRect();
+          const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+          const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+
+          socket.send(
+            `stylus/gesture/${gestureStartx}/${gestureStarty}/${x}/${y}`
+          );
+
+          gestureStartx = null;
+          gestureStarty = null;
+        } else {
+          socket.send(`stylus/${selectedMode}End`);
+          if (selectedMode === 'dot') {
+            pointerDot = null;
+          } else if (selectedMode === 'line' && currentLine) {
+            lines.push(currentLine);
+            currentLine = null;
+          }
+        }
+      });
+
+      function eraseAt(x, y) {
+        const radius = 15;
+        lines = lines.filter((line) => {
+          return !line.points.some((p) => {
+            const dx = p.x - x,
+              dy = p.y - y;
+            return Math.sqrt(dx * dx + dy * dy) < radius;
+          });
+        });
+      }
+
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        lines = [];
+        pointerDot = null;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.send(`stylus/clear`);
+      });
+
+      document.getElementById('btnBefore').addEventListener('click', () => {
+        socket.send(`stylus/before`);
+      });
+
+      document.getElementById('btnAfter').addEventListener('click', () => {
+        socket.send(`stylus/after`);
+      });
+    </script>
+  </body>
+</html>
