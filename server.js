@@ -140,6 +140,10 @@ let initfuck = [0, 0];
 let initmousepos = [0, 0];
 let currentMode = '';
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const [mode, command, x, y, x2, y2] = separateCommand(message.toString());
@@ -320,6 +324,7 @@ wss.on('connection', (ws) => {
       if (command === 'focusing') {
         await keyboard.pressKey(Key.LeftControl);
         await keyboard.releaseKey(Key.LeftControl);
+        await sleep(50);
         await keyboard.pressKey(Key.LeftControl);
         await keyboard.releaseKey(Key.LeftControl);
       }
