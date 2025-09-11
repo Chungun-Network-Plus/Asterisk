@@ -61,6 +61,26 @@
         text-align: center;
         color: white;
       }
+
+      #additionalbox {
+        background-color: gray;
+        display: flex;
+        width: 200px;
+        text-align: center;
+        border-radius: 30px;
+        position: absolute;
+        transform: translate(-50%, 0);
+        bottom: 30px;
+        left: 50%;
+        font-family: 'SokchoBadaDotum';
+      }
+      #additionalbox > div {
+        flex: 1;
+        background-color: white;
+        border-radius: 30px;
+        margin: 5px;
+        padding: 5px;
+      }
     </style>
   </head>
   <body>
@@ -72,8 +92,37 @@
     </div>
 
     <div id="okay">시작</div>
-
+    <div id="additionalbox">
+      <div id="click">클릭</div>
+      <div id="focusing">집중포인터</div>
+      <div id="fullscreen">전체화면</div>
+    </div>
     <script>
+      const click = document.querySelector('#click');
+      const fullscreen = document.querySelector('#fullscreen');
+      const focusing = document.querySelector('#focusing');
+
+      click.addEventListener('click', (event) => {
+        event.stopPropagation();
+        ws.send('pointer/click');
+      });
+
+      fullscreen.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (document.fullscreenElement) {
+          fullscreen.textContent = '전체화면';
+          document.exitFullscreen();
+        } else {
+          document.documentElement.requestFullscreen();
+          fullscreen.textContent = 'esc키';
+        }
+      });
+
+      focusing.addEventListener('click', (event) => {
+        event.stopPropagation();
+        ws.send('pointer/focusing');
+      });
+
       let y = 0;
       let z = 0;
       function degreesToRadians(d) {

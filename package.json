@@ -4,7 +4,7 @@
   "private": true,
   "bin": "server2.js",
   "scripts": {
-    "build:win": "pkg . --targets node18-win-x64 --output dist/Asterisk.exe"
+    "build:win": "pkg . --targets node18-win-x64 --output \"%USERPROFILE%\\Desktop\\Asterisk.exe\""
   },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",

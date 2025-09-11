@@ -18,6 +18,9 @@ const port = 3000;
 let [mousex, mousey] = [0, 0];
 let [width, height] = [0, 0];
 
+keyboard.config.autoDelayMs = 20;
+mouse.config.autoDelayMs = 20;
+
 (async () => {
   const position = await mouse.getPosition();
   mousex = position.x;
@@ -53,7 +56,7 @@ const pems = selfsigned.generate(attrs, { days: 365 });
 
 function formatDate(date) {
   const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0'); // 0~11이므로 +1
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
 
   const hh = String(date.getHours()).padStart(2, '0');
@@ -66,7 +69,6 @@ function formatDate(date) {
 function sendFromGitHub(url, res) {
   https
     .get(url, (response) => {
-      // Content-Type을 그대로 전달
       res.setHeader(
         'Content-Type',
         response.headers['content-type'] || 'application/octet-stream'
@@ -78,43 +80,53 @@ function sendFromGitHub(url, res) {
     });
 }
 
-// Express 라우트
+// 로그
 app.use((req, res, next) => {
-  if (req.url !== '/favicon.ico' && req.url !== '/Asterisk_Logo.png')
+  if (
+    req.url !== '/favicon.ico' &&
+    req.url !== '/Asterisk_Logo.png' &&
+    req.url !== '/left-arrow.png' &&
+    req.url !== '/right-arrow.png'
+  ) {
     console.log(`[${formatDate(new Date())}] '${req.url}'`);
+  }
   next();
 });
 
-// GitHub Pages URL
-const baseUrl = 'https://Chungun-Network-Plus.github.io/Asterisk/public/pages/';
+// GitHub Pages base URL
+const baseUrl = 'https://Chungun-Network-Plus.github.io/Asterisk/public/';
 
-// 홈 페이지
+// 라우트
 app.get('/', (req, res) => {
-  sendFromGitHub(baseUrl + 'home.html', res);
+  sendFromGitHub(baseUrl + 'pages/home.html', res);
 });
 app.get('/presenter', (req, res) => {
-  sendFromGitHub(baseUrl + 'presenter.html', res);
+  sendFromGitHub(baseUrl + 'pages/presenter.html', res);
 });
 app.get('/trackpad', (req, res) => {
-  sendFromGitHub(baseUrl + 'trackpad.html', res);
+  sendFromGitHub(baseUrl + 'pages/trackpad.html', res);
 });
 app.get('/mouse', (req, res) => {
-  sendFromGitHub(baseUrl + 'mouse.html', res);
+  sendFromGitHub(baseUrl + 'pages/mouse.html', res);
 });
 app.get('/pointer', (req, res) => {
-  sendFromGitHub(baseUrl + 'pointer.html', res);
+  sendFromGitHub(baseUrl + 'pages/pointer.html', res);
 });
+app.get('/stylus', (req, res) => {
+  sendFromGitHub(baseUrl + 'pages/stylus.html', res);
+});
+
 app.get('/favicon.ico', (req, res) => {
-  sendFromGitHub(
-    'https://Chungun-Network-Plus.github.io/Asterisk/public/images/favicon.ico',
-    res
-  );
+  sendFromGitHub(baseUrl + 'images/favicon.ico', res);
 });
 app.get('/Asterisk_Logo.png', (req, res) => {
-  sendFromGitHub(
-    'https://Chungun-Network-Plus.github.io/Asterisk/public/images/Asterisk_Logo.png',
-    res
-  );
+  sendFromGitHub(baseUrl + 'images/Asterisk_Logo.png', res);
+});
+app.get('/left-arrow.png', (req, res) => {
+  sendFromGitHub(baseUrl + 'images/left-arrow.png', res);
+});
+app.get('/right-arrow.png', (req, res) => {
+  sendFromGitHub(baseUrl + 'images/right-arrow.png', res);
 });
 
 // HTTPS 서버
@@ -131,10 +143,11 @@ const wss = new WebSocket.Server({ server });
 
 let initfuck = [0, 0];
 let initmousepos = [0, 0];
+let currentMode = '';
 
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
-    const [mode, command, x, y] = separateCommand(message.toString());
+    const [mode, command, x, y, x2, y2] = separateCommand(message.toString());
 
     // presenter
     if (mode === 'presenter') {
@@ -205,6 +218,16 @@ wss.on('connection', (ws) => {
             initmousepos[1] + (parseFloat(y) - initfuck[1]) * 10
           )
         );
+      }
+      if (command === 'click') {
+        await mouse.pressButton(Button.LEFT);
+        await mouse.releaseButton(Button.LEFT);
+      }
+      if (command === 'focusing') {
+        await keyboard.pressKey(Key.LeftControl);
+        await keyboard.releaseKey(Key.LeftControl);
+        await keyboard.pressKey(Key.LeftControl);
+        await keyboard.releaseKey(Key.LeftControl);
       }
     }
   });

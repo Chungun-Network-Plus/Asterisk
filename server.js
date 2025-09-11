@@ -313,6 +313,16 @@ wss.on('connection', (ws) => {
           )
         );
       }
+      if (command === 'click') {
+        await mouse.pressButton(Button.LEFT);
+        await mouse.releaseButton(Button.LEFT);
+      }
+      if (command === 'focusing') {
+        await keyboard.pressKey(Key.LeftControl);
+        await keyboard.releaseKey(Key.LeftControl);
+        await keyboard.pressKey(Key.LeftControl);
+        await keyboard.releaseKey(Key.LeftControl);
+      }
     }
   });
 });
