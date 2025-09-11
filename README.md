@@ -33,8 +33,10 @@
 2. 다음 명령어를 입력하고 `enter` 키를 칩니다.
 
 ```
-cd Downloads/Asterisk-main && npm install && npm run build:win
+cd Downloads/Asterisk-main/Asterisk-main && npm install && npm run build:win
 ```
+
+![Cmd command](assets/Cmd_command.png)
 
 ## 4. 바탕화면을 확인합니다.
 
