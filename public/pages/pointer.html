@@ -90,6 +90,7 @@
     <div id="modename">
       [Pointer 모드] 시작 버튼을 누르고 장치를 회전시키세요.
     </div>
+    <button id="switch">switch</button>
 
     <div id="okay">시작</div>
     <div id="additionalbox">
@@ -128,6 +129,12 @@
       function degreesToRadians(d) {
         return (d * Math.PI) / 180;
       }
+
+      let way = true;
+      const switchElement = document.querySelector('#switch');
+      switchElement.addEventListener('click', () => {
+        way = !way;
+      });
 
       window.addEventListener('deviceorientation', (event) => {
         const alpha = event.alpha || 0; // z축 회전 (방위각)
@@ -173,8 +180,8 @@
         // x: ${ux.toFixed(3)}
         // y: ${uy.toFixed(3)}
         // z: ${uz.toFixed(3)}`;
-        y = 30 - 30 * (uy / ux);
-        z = 30 - 30 * (uz / ux);
+        y = 100 - 100 * (uy / ux);
+        z = (-100 + 100 * (uz / ux)) * (way ? -1 : 1);
       });
       const ws = new WebSocket(
         'wss://' + window.location.href.replace('https://', '')
