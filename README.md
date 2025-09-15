@@ -41,3 +41,25 @@ cd Downloads/Asterisk-main/Asterisk-main && npm install && npm run build:win
 ## 4. 바탕화면을 확인합니다.
 
 ![Asterisk downloaded](assets/Asterisk_downloaded.png)
+
+# 이용법
+
+## 1. 프로그램 실행
+
+`Asterisk*`를 실행하면 다음과 같은 화면이 나옵니다.
+
+![Asterisk window](assets/Asterisk_window.png)
+
+## 2. 스마트폰에서 웹사이트 열기
+
+1. 위 이미지에서 `URL to connect`에 적힌 주소를 스마트폰에서 정확히 (https도 포함) 접속합니다.
+
+2. 그럼 위와 같은 이미지가 뜨는데 `고급` -> `~.~.~.~(안전하지 않음)`을 클릭합니다.
+
+![Mobile error](assets/Mobile_error.png)
+
+![Mobile error2](assets/Mobile_error2.png)
+
+3. Enjoy!
+
+![Asterisk main](assets/Asterisk_main.jpg)
