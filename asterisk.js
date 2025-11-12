@@ -12,6 +12,7 @@ const {
   screen,
   Button,
 } = require('@nut-tree-fork/nut-js');
+const qrcode = require('qrcode-terminal');
 
 const app = express();
 const port = 3000;
@@ -20,7 +21,7 @@ let [mousex, mousey] = [0, 0];
 let [width, height] = [0, 0];
 
 keyboard.config.autoDelayMs = 20;
-mouse.config.autoDelayMs = 20;
+mouse.config.autoDelayMs = 0;
 
 (async () => {
   const position = await mouse.getPosition();
@@ -136,7 +137,7 @@ const server = https.createServer(
 // WebSocket
 const wss = new WebSocket.Server({ server });
 
-let initfuck = [0, 0];
+let current_inital_mouse_position = [0, 0];
 let initmousepos = [0, 0];
 let currentMode = '';
 
@@ -265,33 +266,18 @@ wss.on('connection', (ws) => {
         const acceleration = Math.sqrt(parseFloat(x) ** 2 + parseFloat(y) ** 2);
         mousex += parseFloat(x) * Math.log(acceleration + 1) * 2;
         mousey += parseFloat(y) * Math.log(acceleration + 1) * 2;
-
         if (mousex < 0) mousex = 0;
         if (mousey < 0) mousey = 0;
         if (mousex > width) mousex = width;
         if (mousey > height) mousey = height;
-
         await mouse.setPosition(new Point(mousex, mousey));
       }
-      if (command === 'leftclick') {
-        await mouse.pressButton(Button.LEFT);
-        await mouse.releaseButton(Button.LEFT);
-      }
-      if (command === 'rightclick') {
-        await mouse.click(Button.RIGHT);
-      }
-      if (command === 'vertscroll') {
-        await mouse.scrollUp(y * 3);
-      }
-      if (command === 'horiscroll') {
-        await mouse.scrollRight(x * 3);
-      }
-      if (command === 'clickmovestart') {
-        await mouse.pressButton(Button.LEFT);
-      }
-      if (command === 'clickmoveend') {
-        await mouse.releaseButton(Button.LEFT);
-      }
+      if (command === 'leftclick') await mouse.click(Button.LEFT);
+      if (command === 'rightclick') await mouse.click(Button.RIGHT);
+      if (command === 'vertscroll') await mouse.scrollUp(y * 3);
+      if (command === 'horiscroll') await mouse.scrollRight(x * 3);
+      if (command === 'clickmovestart') await mouse.pressButton(Button.LEFT);
+      if (command === 'clickmoveend') await mouse.releaseButton(Button.LEFT);
     }
 
     // mouse
@@ -305,15 +291,17 @@ wss.on('connection', (ws) => {
     // pointer
     if (mode === 'pointer') {
       if (command === 'start') {
-        initfuck = [parseFloat(x), parseFloat(y)];
+        current_inital_mouse_position = [parseFloat(x), parseFloat(y)];
         const pos = await mouse.getPosition();
         initmousepos = [pos.x, pos.y];
       }
       if (command === 'move') {
         await mouse.setPosition(
           new Point(
-            initmousepos[0] + (parseFloat(x) - initfuck[0]) * 10,
-            initmousepos[1] + (parseFloat(y) - initfuck[1]) * 10
+            initmousepos[0] +
+              (parseFloat(x) - current_inital_mouse_position[0]) * 10,
+            initmousepos[1] +
+              (parseFloat(y) - current_inital_mouse_position[1]) * 10
           )
         );
       }
@@ -354,5 +342,8 @@ server.listen(port, '0.0.0.0', () => {
   console.clear();
   console.log(message);
   console.log(`URL to connect : https://${ip}:${port}\n`);
+  qrcode.generate(`https://${ip}:${port}`, { small: true }, (code) => {
+    console.log(code);
+  });
   console.log('[Asterisk* Prompt Logs]');
 });

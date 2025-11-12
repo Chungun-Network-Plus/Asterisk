@@ -11,6 +11,7 @@ const {
   screen,
   Button,
 } = require('@nut-tree-fork/nut-js');
+const qrcode = require('qrcode-terminal');
 
 const app = express();
 const port = 3000;
@@ -19,7 +20,7 @@ let [mousex, mousey] = [0, 0];
 let [width, height] = [0, 0];
 
 keyboard.config.autoDelayMs = 20;
-mouse.config.autoDelayMs = 20;
+mouse.config.autoDelayMs = 0;
 
 (async () => {
   const position = await mouse.getPosition();
@@ -359,5 +360,8 @@ server.listen(port, '0.0.0.0', () => {
   console.clear();
   console.log(message);
   console.log(`URL to connect : https://${ip}:${port}\n`);
+  qrcode.generate(`https://${ip}:${port}`, { small: true }, (code) => {
+    console.log(code);
+  });
   console.log('[Asterisk* Prompt Logs]');
 });

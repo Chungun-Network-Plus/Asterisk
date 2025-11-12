@@ -63,6 +63,11 @@
       let firsttouchmove = true;
       let touchduration = 0;
 
+      let avg_dx = 0;
+      let avg_dy = 0;
+      let frameCount = 0;
+      const MAX_FRAMES = 10;
+
       body.addEventListener('touchstart', (e) => {
         const { clientX, clientY } = e.touches[0];
         x = clientX;
@@ -83,6 +88,9 @@
         }
 
         state = 'none';
+        avg_dx = 0;
+        avg_dy = 0;
+        frameCount = 0;
       });
 
       body.addEventListener(
@@ -104,38 +112,102 @@
               ws.send(`trackpad/move/${clientX - x}/${clientY - y}`);
             }
           }
+
           if (e.touches.length === 2) {
             const { clientX: plusclientX, clientY: plusclientY } = e.touches[1];
+            const dx1 = clientX - x;
+            const dy1 = clientY - y;
+            const dx2 = plusclientX - plusx;
+            const dy2 = plusclientY - plusy;
+
+            const dot = dx1 * dx2 + dy1 * dy2;
+
             if (state === 'none') {
-              // 벡터의 내적
-              if (
-                (clientX - x) * (plusclientX - plusx) +
-                  (clientY - y) * (plusclientY - plusy) >=
-                0
-              ) {
-                // 예각이면
-                if ((clientY - y) / (clientX - x) >= 1) {
-                  state = 'vertscroll'; // 세로스크롤
-                } else {
-                  // state = 'horiscroll'; // 가로스크롤
-                  state = 'vertscroll';
+              if (dot >= 0) {
+                if (frameCount < MAX_FRAMES) {
+                  // 최근 프레임일수록 가중치 상승
+                  const weight = (frameCount + 1) / MAX_FRAMES; // 0.1 → 1.0
+                  avg_dx = (1 - weight) * avg_dx + weight * ((dx1 + dx2) / 2);
+                  avg_dy = (1 - weight) * avg_dy + weight * ((dy1 + dy2) / 2);
+                  frameCount++;
+
+                  if (frameCount >= MAX_FRAMES) {
+                    if (Math.abs(avg_dy) > Math.abs(avg_dx)) {
+                      state = 'vertscroll';
+                    } else {
+                      state = 'horiscroll';
+                    }
+                  }
                 }
               } else {
-                // 둔각이면
                 state = 'zoom';
               }
             }
+
             ws.send(`trackpad/${state}/${clientX - x}/${clientY - y}`);
             console.log(state);
 
             plusx = plusclientX;
             plusy = plusclientY;
           }
+
           x = clientX;
           y = clientY;
         },
         { passive: false }
       );
+
+      // body.addEventListener(
+      //   'touchmove',
+      //   (e) => {
+      //     e.preventDefault();
+      //     touchduration += 1;
+
+      //     const { clientX, clientY } = e.touches[0];
+
+      //     if (e.touches.length === 1 && beforex === 0) {
+      //       if (clickmove === true) {
+      //         ws.send('trackpad/clickmovestart');
+      //         clickmove = false;
+      //       }
+      //       if (firsttouchmove === true) {
+      //         firsttouchmove = false;
+      //       } else {
+      //         ws.send(`trackpad/move/${clientX - x}/${clientY - y}`);
+      //       }
+      //     }
+      //     if (e.touches.length === 2) {
+      //       const { clientX: plusclientX, clientY: plusclientY } = e.touches[1];
+      //       if (state === 'none') {
+      //         // 벡터의 내적
+      //         if (
+      //           (clientX - x) * (plusclientX - plusx) +
+      //             (clientY - y) * (plusclientY - plusy) >=
+      //           0
+      //         ) {
+      //           // 예각이면
+      //           if ((clientY - y) / (clientX - x) >= 1) {
+      //             state = 'vertscroll'; // 세로스크롤
+      //           } else {
+      //             state = 'horiscroll'; // 가로스크롤
+      //             // state = 'vertscroll';
+      //           }
+      //         } else {
+      //           // 둔각이면
+      //           state = 'zoom';
+      //         }
+      //       }
+      //       ws.send(`trackpad/${state}/${clientX - x}/${clientY - y}`);
+      //       console.log(state);
+
+      //       plusx = plusclientX;
+      //       plusy = plusclientY;
+      //     }
+      //     x = clientX;
+      //     y = clientY;
+      //   },
+      //   { passive: false }
+      // );
 
       body.addEventListener('touchend', (e) => {
         ws.send('trackpad/clickmoveend');
